@@ -1,0 +1,187 @@
+<h1>🧪 Hands-On Lab: Brute Force Alerting & Incident Response (Sentinel + MDE)</h1>
+
+<hr />
+
+<h2>✅ Pre-Lab Setup</h2>
+<ul>
+  <li>Ensure a Windows VM exists and is onboarded to Microsoft Defender for Endpoint (MDE)</li>
+  <li>Confirm device telemetry is flowing into Sentinel via Log Analytics</li>
+</ul>
+
+<img width="1105" height="427" alt="image" src="https://github.com/user-attachments/assets/8eebc1a4-9101-4145-89ea-abdcf9969417" />
+
+
+<hr />
+
+<h2>🧠 Explanation (What We’re Building)</h2>
+<p>
+Failed and successful logons on the VM are captured in <strong>DeviceLogonEvents</strong> by MDE and forwarded to the
+Log Analytics Workspace used by Microsoft Sentinel. We create a <strong>scheduled analytics rule</strong> that triggers when
+the same <strong>Remote IP</strong> fails to log into the same <strong>Device</strong> repeatedly (example: 10+ failures in 5 hours).
+</p>
+
+<hr />
+
+<h2>🛠️ Part 1 — Create the Brute Force Analytics Rule</h2>
+<p><strong>Goal:</strong> Detect repeated failed logons from the same Remote IP to the same VM.</p>
+
+<details>
+  <summary><strong>🧩 KQL (Brute Force Attempt Detection)</strong></summary>
+  <pre><code>
+DeviceLogonEvents
+| where DeviceName == "jinks-ir-scenes"
+| where ActionType == "LogonFailed" and Timestamp >= ago(24h)
+| summarize Attempts = count() by RemoteIP, AccountName, DeviceName, DeviceId, ReportId, Timestamp
+| where Attempts >= 5
+| order by Attempts
+  </code></pre>
+</details>
+
+<p><strong>📸 Screenshot:</strong> <code>./images/01-query-results.png</code></p>
+
+<h3>⚙️ Create the Rule</h3>
+<ul>
+  <li>Go to: <strong>Sentinel → Analytics → Scheduled query rule</strong></li>
+  <li>Enable the rule</li>
+  <li>Set schedule: <strong>Run every 4 hours</strong></li>
+  <li>Lookup data: <strong>Last 5 hours</strong> (and/or enforce in the query)</li>
+  <li>Stop running query after alert is generated: <strong>Yes</strong></li>
+  <li>Entity mappings:
+    <ul>
+      <li>✅ Remote IP → <code>RemoteIP</code></li>
+      <li>✅ Host/Device → <code>DeviceName</code></li>
+    </ul>
+  </li>
+  <li>Incident settings:
+    <ul>
+      <li>✅ Automatically create an incident</li>
+      <li>✅ Group alerts into a single incident per 24 hours</li>
+      <li>✅ Stop running after alert generated for 24 hours</li>
+    </ul>
+  </li>
+  <li>MITRE mapping: used AI to map relevant techniques</li>
+</ul>
+
+<img width="2283" height="1155" alt="image" src="https://github.com/user-attachments/assets/7fa9cb67-79f2-43c7-a81f-600ef123637d" />
+
+
+
+<hr />
+
+<h2>💥 Part 2 — Trigger the Alert (Create the Incident)</h2>
+<ul>
+  <li>If logs already exist: wait for the scheduled query to run</li>
+  <li>If logs do not exist: generate failures by intentionally failing login attempts enough times</li>
+  <li>Confirm the incident appears in: <strong>Sentinel → Threat Management → Incidents</strong></li>
+</ul>
+
+<img width="439" height="321" alt="image" src="https://github.com/user-attachments/assets/f3a375e4-1698-4ab7-bf8b-53336268416c" />
+
+
+<hr />
+
+<h2>🧯 Part 3 — Work the Incident (NIST 800-61)</h2>
+
+<h3>🧰 Preparation</h3>
+<ul>
+  <li>Document roles, procedures, and tools used</li>
+</ul>
+
+<h3>🔍 Detection &amp; Analysis</h3>
+<ul>
+  <li>Assign the incident to myself</li>
+  <li>Set status to <strong>Active</strong></li>
+  <li>Actions → <strong>Investigate</strong> (wait for entities if needed)</li>
+  <li>Recorded:
+    <ul>
+      <li>Number of IPs involved</li>
+      <li>Number of devices targeted</li>
+      <li>Time window and event volume</li>
+    </ul>
+  </li>
+</ul>
+
+<p><strong>📸 Screenshot:</strong> <code>./images/04-investigation-entities.png</code></p>
+
+<h3>✅ Check for Brute Force Success (Did Any IP Log In?)</h3>
+<details>
+  <summary><strong>🧩 KQL (Validate Successful Login From Suspect IP)</strong></summary>
+  <pre><code>
+let TargetDevice = "windows-target-1"; // Replace with target VM
+let SuspectIP = "89.116.158.44";       // Replace with suspect IP
+DeviceLogonEvents
+| where ActionType == "LogonSuccess"
+| where DeviceName == TargetDevice and RemoteIP == SuspectIP
+| order by TimeGenerated desc
+  </code></pre>
+</details>
+
+<p><strong>📸 Screenshot:</strong> <code>./images/05-success-check.png</code></p>
+
+<h3>🛡️ Containment, Eradication &amp; Recovery</h3>
+<ul>
+  <li>In a real environment:
+    <ul>
+      <li>Isolate the device via MDE</li>
+      <li>Run antivirus scan</li>
+    </ul>
+  </li>
+  <li>For this lab:
+    <ul>
+      <li>Locked down the VM’s NSG so only my IP could reach the VM</li>
+      <li>Documented: “NSG was locked down to prevent RDP attempts from the public internet”</li>
+      <li>Proposed: Azure Policy to prevent wide-open NSGs org-wide</li>
+    </ul>
+  </li>
+</ul>
+
+<p><strong>📸 Screenshot:</strong> <code>./images/06-nsg-lockdown.png</code></p>
+
+<h3>📝 Post-Incident Activities</h3>
+<ul>
+  <li>Recorded findings and lessons learned in the incident</li>
+  <li>Noted improvement opportunities:
+    <ul>
+      <li>Require NSG hardening baseline</li>
+      <li>Enforce with Azure Policy</li>
+      <li>Optional: enhance detection to trigger only when failures are followed by success</li>
+    </ul>
+  </li>
+</ul>
+
+<h3>✅ Closure</h3>
+<ul>
+  <li>Reviewed notes and evidence</li>
+  <li>Closed the incident as <strong>True Positive</strong></li>
+</ul>
+
+<p><strong>📸 Screenshot:</strong> <code>./images/07-incident-closed.png</code></p>
+
+<hr />
+
+<h2>🧹 Part 4 — Cleanup (Be Careful)</h2>
+<ul>
+  <li>Sentinel → Threat Management → Incidents:
+    <ul>
+      <li>Filter to <strong>Closed</strong></li>
+      <li>Delete <strong>ONLY YOUR</strong> incident (search by your name)</li>
+    </ul>
+  </li>
+  <li>Sentinel → Configuration → Analytics:
+    <ul>
+      <li>Delete <strong>ONLY YOUR</strong> analytics rule</li>
+    </ul>
+  </li>
+</ul>
+
+<p><strong>📸 Screenshot:</strong> <code>./images/08-cleanup.png</code></p>
+
+<hr />
+
+<h2>✅ Outcome</h2>
+<ul>
+  <li>Built and validated a brute-force detection rule in Sentinel</li>
+  <li>Generated an incident and investigated entity mappings</li>
+  <li>Verified whether brute force attempts resulted in successful access</li>
+  <li>Documented mitigation via NSG lockdown and policy recommendations</li>
+</ul>
