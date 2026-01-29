@@ -101,7 +101,11 @@ DeviceLogonEvents
   </li>
 </ul>
 
-<p><strong>📸 Screenshot:</strong> <code>./images/04-investigation-entities.png</code></p>
+<img width="1739" height="293" alt="image" src="https://github.com/user-attachments/assets/5ed74e47-375d-4858-80e5-0fa01c9f0739" />
+
+<img width="275" height="565" alt="image" src="https://github.com/user-attachments/assets/8cb450d6-9787-4f5b-9acb-f3ab4abf07d5" />
+
+
 
 <h3>✅ Check for Brute Force Success (Did Any IP Log In?)</h3>
 <details>
