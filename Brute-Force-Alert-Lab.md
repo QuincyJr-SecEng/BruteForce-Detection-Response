@@ -105,22 +105,18 @@ DeviceLogonEvents
 
 <img width="275" height="565" alt="image" src="https://github.com/user-attachments/assets/8cb450d6-9787-4f5b-9acb-f3ab4abf07d5" />
 
-
-
 <h3>✅ Check for Brute Force Success (Did Any IP Log In?)</h3>
 <details>
   <summary><strong>🧩 KQL (Validate Successful Login From Suspect IP)</strong></summary>
   <pre><code>
-let TargetDevice = "windows-target-1"; // Replace with target VM
-let SuspectIP = "89.116.158.44";       // Replace with suspect IP
+let TargetDevice = "jinks-ir-scenes"; // Replace with target VM
+let SuspectIP = "xxx.xxx.xxx.xxx";       // Replace with suspect IP
 DeviceLogonEvents
 | where ActionType == "LogonSuccess"
 | where DeviceName == TargetDevice and RemoteIP == SuspectIP
 | order by TimeGenerated desc
   </code></pre>
 </details>
-
-<p><strong>📸 Screenshot:</strong> <code>./images/05-success-check.png</code></p>
 
 <h3>🛡️ Containment, Eradication &amp; Recovery</h3>
 <ul>
@@ -138,8 +134,6 @@ DeviceLogonEvents
     </ul>
   </li>
 </ul>
-
-<p><strong>📸 Screenshot:</strong> <code>./images/06-nsg-lockdown.png</code></p>
 
 <h3>📝 Post-Incident Activities</h3>
 <ul>
@@ -159,29 +153,10 @@ DeviceLogonEvents
   <li>Closed the incident as <strong>True Positive</strong></li>
 </ul>
 
-<p><strong>📸 Screenshot:</strong> <code>./images/07-incident-closed.png</code></p>
+<img width="503" height="511" alt="image" src="https://github.com/user-attachments/assets/b6f414dd-0430-4a18-a063-a72122c130e3" />
+
 
 <hr />
-
-<h2>🧹 Part 4 — Cleanup (Be Careful)</h2>
-<ul>
-  <li>Sentinel → Threat Management → Incidents:
-    <ul>
-      <li>Filter to <strong>Closed</strong></li>
-      <li>Delete <strong>ONLY YOUR</strong> incident (search by your name)</li>
-    </ul>
-  </li>
-  <li>Sentinel → Configuration → Analytics:
-    <ul>
-      <li>Delete <strong>ONLY YOUR</strong> analytics rule</li>
-    </ul>
-  </li>
-</ul>
-
-<p><strong>📸 Screenshot:</strong> <code>./images/08-cleanup.png</code></p>
-
-<hr />
-
 <h2>✅ Outcome</h2>
 <ul>
   <li>Built and validated a brute-force detection rule in Sentinel</li>
