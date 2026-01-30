@@ -135,6 +135,9 @@ DeviceLogonEvents
   </li>
 </ul>
 
+<img width="1780" height="272" alt="image" src="https://github.com/user-attachments/assets/1cc907ae-fa62-4c93-892b-38a96e955c2c" />
+
+
 <h3>📝 Post-Incident Activities</h3>
 <ul>
   <li>Recorded findings and lessons learned in the incident</li>
